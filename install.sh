@@ -65,8 +65,11 @@ echo -e "${GREEN}[1/4] Checking prerequisites...${NC}"
 # Check if Ansible is installed
 if ! command -v ansible-playbook &> /dev/null; then
     echo -e "${YELLOW}Ansible not found. Installing...${NC}"
-    $SUDO apt-get update -qq
-    $SUDO apt-get install -y ansible
+    if [["OS_TYPE"=="arch"]]; then
+        $SUDO pacman -Sy --noconfirm ansible
+    else
+        $SUDO apt-get update -qq
+        $SUDO apt-get install -y ansible
     echo -e "${GREEN}✓ Ansible installed${NC}"
 else
     echo -e "${GREEN}✓ Ansible already installed${NC}"
