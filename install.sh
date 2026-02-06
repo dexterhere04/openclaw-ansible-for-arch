@@ -34,6 +34,9 @@ echo ""
 if [[ "$OSTYPE" == "darwin"* ]]; then
     OS_TYPE="macos"
     echo -e "${GREEN}Detected: macOS${NC}"
+elif command -v pacman &> /dev/null; then
+    OS_TYPE="arch"
+    echo -e "${GREEN}Detected: Arch Linux${NC}"
 elif command -v apt-get &> /dev/null; then
     OS_TYPE="linux"
     echo -e "${GREEN}Detected: Debian/Ubuntu Linux${NC}"
