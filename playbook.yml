@@ -19,9 +19,10 @@
     - name: Detect operating system
       ansible.builtin.set_fact:
         is_macos: "{{ ansible_os_family == 'Darwin' }}"
-        is_linux: "{{ ansible_os_family == 'Debian' }}"
+        is_linux: "{{ ansible_os_family in ['Debian', 'RedHat', 'Archlinux'] }}"
         is_debian: "{{ ansible_distribution in ['Debian', 'Ubuntu'] }}"
         is_redhat: "{{ ansible_os_family == 'RedHat' }}"
+        is_arch: "{{ ansible_os_family == 'Archlinux' }}"
 
     - name: Display detected OS
       ansible.builtin.debug:
@@ -31,6 +32,7 @@
           macOS: {{ is_macos }}
           Linux (Debian/Ubuntu): {{ is_debian }}
           Linux (RedHat/CentOS): {{ is_redhat }}
+          Linux (ArchLinux): {{ is_arch }}
 
     - name: Update apt cache and upgrade all packages (Debian/Ubuntu)
       ansible.builtin.apt:
