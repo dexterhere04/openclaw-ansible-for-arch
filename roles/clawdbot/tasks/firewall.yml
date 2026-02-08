@@ -5,6 +5,10 @@
   ansible.builtin.include_tasks: firewall-linux.yml
   when: ansible_os_family == 'Debian'
 
+- name: Include Arch Linux firewall configuration
+  ansible.builtin.include_tasks: firewall-arch.yml
+  when: ansible_os_family == 'Archlinux'
+
 - name: Include macOS firewall configuration
   ansible.builtin.include_tasks: firewall-macos.yml
   when: ansible_os_family == 'Darwin'

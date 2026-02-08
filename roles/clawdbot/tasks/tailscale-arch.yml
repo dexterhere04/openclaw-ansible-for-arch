@@ -1,0 +1,39 @@
+---
+# Arch Linux-specific Tailscale installation (pacman-based)
+
+- name: Install Tailscale from official Arch repositories
+  ansible.builtin.pacman:
+    name: tailscale
+    state: present
+
+- name: Ensure Tailscale service is started and enabled
+  ansible.builtin.systemd:
+    name: tailscaled
+    state: started
+    enabled: true
+
+- name: Check if Tailscale is connected (Arch Linux)
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status_arch
+  changed_when: false
+  failed_when: false
+
+- name: Display Tailscale setup instructions (Arch Linux)
+  ansible.builtin.debug:
+    msg:
+      - "============================================"
+      - "Tailscale installed on Arch Linux"
+      - "============================================"
+      - ""
+      - "To connect this Arch system to your Tailnet:"
+      - ""
+      - "Option 1 - Interactive:"
+      - "  sudo tailscale up"
+      - ""
+      - "Option 2 - With auth key:"
+      - "  sudo tailscale up --authkey tskey-auth-xxxxx"
+      - ""
+      - "Get auth key from: https://login.tailscale.com/admin/settings/keys"
+      - ""
+      - "Check status: sudo tailscale status"
+  when: tailscale_status_arch.rc != 0

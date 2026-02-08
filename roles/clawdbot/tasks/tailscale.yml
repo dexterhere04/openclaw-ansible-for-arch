@@ -5,6 +5,10 @@
   ansible.builtin.include_tasks: tailscale-linux.yml
   when: ansible_os_family == 'Debian'
 
+- name: Include Arch Linux Tailscale installation
+  ansible.builtin.include_tasks: tailscale-arch.yml
+  when: ansible_os_family == 'Archlinux'
+
 - name: Include macOS Tailscale installation
   ansible.builtin.include_tasks: tailscale-macos.yml
   when: ansible_os_family == 'Darwin'

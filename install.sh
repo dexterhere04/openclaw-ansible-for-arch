@@ -42,7 +42,7 @@ elif command -v apt-get &> /dev/null; then
     echo -e "${GREEN}Detected: Debian/Ubuntu Linux${NC}"
 else
     echo -e "${RED}Error: Unsupported operating system.${NC}"
-    echo -e "${RED}This installer supports: Debian/Ubuntu and macOS${NC}"
+    echo -e "${RED}This installer supports: Debian/Ubuntu, Arch Linux, and macOS${NC}"
     exit 1
 fi
 
@@ -65,11 +65,12 @@ echo -e "${GREEN}[1/4] Checking prerequisites...${NC}"
 # Check if Ansible is installed
 if ! command -v ansible-playbook &> /dev/null; then
     echo -e "${YELLOW}Ansible not found. Installing...${NC}"
-    if [["OS_TYPE"=="arch"]]; then
+    if [[ "$OS_TYPE" == "arch" ]]; then
         $SUDO pacman -Sy --noconfirm ansible
     else
         $SUDO apt-get update -qq
         $SUDO apt-get install -y ansible
+    fi
     echo -e "${GREEN}✓ Ansible installed${NC}"
 else
     echo -e "${GREEN}✓ Ansible already installed${NC}"

@@ -1,0 +1,25 @@
+---
+# Arch Linux-specific Docker installation (pacman-based)
+
+- name: Install Docker from official Arch repositories
+  ansible.builtin.pacman:
+    name:
+      - docker
+      - docker-compose
+      - docker-buildx
+    state: present
+
+- name: Ensure Docker service is started and enabled
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Add user to docker group
+  ansible.builtin.user:
+    name: "{{ clawdbot_user }}"
+    groups: docker
+    append: true
+
+- name: Reset SSH connection to apply docker group
+  ansible.builtin.meta: reset_connection

@@ -1,0 +1,119 @@
+---
+# Arch Linux-specific firewall configuration (UFW) with security hardening
+# Note: Arch Linux doesn't have unattended-upgrades equivalent
+
+# Install and configure fail2ban for SSH brute-force protection
+- name: Install fail2ban
+  ansible.builtin.pacman:
+    name: fail2ban
+    state: present
+
+- name: Configure fail2ban for SSH protection
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      # Clawdbot security hardening - SSH protection
+      [DEFAULT]
+      bantime = 3600
+      findtime = 600
+      maxretry = 5
+      backend = systemd
+
+      [sshd]
+      enabled = true
+      port = ssh
+      filter = sshd
+      # logpath not needed - systemd backend reads from journal
+  notify: Restart fail2ban
+
+- name: Enable and start fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: started
+    enabled: true
+
+# Note: Skipping unattended-upgrades as Arch Linux is rolling release
+# and users typically update manually with pacman -Syu
+
+# UFW Firewall configuration
+- name: Install UFW
+  ansible.builtin.pacman:
+    name: ufw
+    state: present
+
+- name: Set UFW default policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: 'incoming', policy: 'deny' }
+    - { direction: 'outgoing', policy: 'allow' }
+    - { direction: 'routed', policy: 'deny' }
+
+- name: Allow SSH on port 22
+  community.general.ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+    comment: 'SSH'
+
+- name: Allow Tailscale UDP port 41641
+  community.general.ufw:
+    rule: allow
+    port: '41641'
+    proto: udp
+    comment: 'Tailscale'
+
+- name: Get default network interface
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      ip route | grep default | awk '{print $5}' | head -n1
+    executable: /bin/bash
+  register: default_interface
+  changed_when: false
+
+- name: Create UFW after.rules for Docker isolation
+  ansible.builtin.blockinfile:
+    path: /etc/ufw/after.rules
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Docker isolation"
+    insertbefore: "^COMMIT$"
+    block: |
+      # Docker port isolation - block all forwarded traffic by default
+      :DOCKER-USER - [0:0]
+
+      # Allow established connections
+      -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+      # Allow localhost
+      -A DOCKER-USER -i lo -j ACCEPT
+
+      # Block all other forwarded traffic to Docker containers from external interface
+      -A DOCKER-USER -i {{ default_interface.stdout }} -j DROP
+    create: false
+
+- name: Create Docker daemon config directory
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: '0755'
+
+- name: Configure Docker daemon to work with UFW
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart docker
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+
+- name: Reload UFW
+  community.general.ufw:
+    state: reloaded

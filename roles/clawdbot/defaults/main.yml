@@ -19,7 +19,14 @@ clawdbot_home: /home/clawdbot
 
 # OS-specific settings (set dynamically in tasks)
 homebrew_prefix: "{{ '/opt/homebrew' if ansible_os_family == 'Darwin' else '/home/linuxbrew/.linuxbrew' }}"
-package_manager: "{{ 'brew' if ansible_os_family == 'Darwin' else 'apt' }}"
+package_manager: >-
+  {%- if ansible_os_family == 'Darwin' -%}
+  brew
+  {%- elif ansible_os_family == 'Archlinux' -%}
+  pacman
+  {%- else -%}
+  apt
+  {%- endif -%}
 
 # Installation mode: 'release' or 'development'
 # release: Install via pnpm install -g clawdbot@latest
